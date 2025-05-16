@@ -118,205 +118,199 @@ publishing {
     }
 }
 
-def checkExecResult(executionResult, failText, standardOutput) {
-    if (executionResult) {
-        if (executionResult.get().getExitValue() != 0) {
-            throw new GradleException('Non-zero exit value: ' + executionResult.get().getExitValue())
-        }
-        if (standardOutput.toString().contains(failText)) {
-            throw new GradleException('"' + failText + '" string in output: ' + standardOutput.toString())
-        }
-    } else {
-        throw new GradleException('Returned a null executionResult object')
-    }
-}
+// def checkExecResult(executionResult, failText, standardOutput) {
+//     if (!executionResult?.get() || executionResult.get().getExitValue() != 0) {
+//         throw new GradleException("Non-zero exit value or null executionResult")
+//     }
+//     if (standardOutput.toString().contains(failText)) {
+//         throw new GradleException("Output contains failure text: $failText")
+//     }
+// }
 
-task createTestDockerImage(type: Exec) {
-    if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-        def standardOutput = new ByteArrayOutputStream()
-        commandLine 'sh', '-c', "docker build -f $project.projectDir/tests/resources/Dockerfile -t ballerina-mysql" +
-                " -q $project.projectDir/tests/resources/"
-        doLast {
-            checkExecResult(executionResult, 'Error', standardOutput)
-            sleep(10 * 1000)
-        }
-    }
-}
+// task createTestDockerImage(type: Exec) {
+//     def standardOutput = new ByteArrayOutputStream()
+//     commandLine Os.isFamily(Os.FAMILY_WINDOWS) ?
+//         ['cmd', '/c', "docker build -f ${project.projectDir}\\tests\\resources\\Dockerfile -t ballerina-mysql -q ${project.projectDir}\\tests\\resources\\"] :
+//         ['sh', '-c', "docker build -f $project.projectDir/tests/resources/Dockerfile -t ballerina-mysql -q $project.projectDir/tests/resources/"]
+//     doLast {
+//         checkExecResult(executionResult, 'Error', standardOutput)
+//         sleep(10 * 1000)
+//     }
+// }
 
-def checkTestDockerContainerStatus(dockerName) {
-    if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-        try {
-            return exec {
-                commandLine 'sh', '-c',
-                        "docker exec ${dockerName} mysqladmin ping -hlocalhost -uroot -pTest123# --silent"
-            }.exitValue
-        } catch (all) {
-            return 1
-        }
-    }
-}
+// def checkTestDockerContainerStatus(dockerName) {
+//     try {
+//         def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ?
+//             ['cmd', '/c', "docker exec ${dockerName} mysqladmin ping -hlocalhost -uroot -pTest123# --silent"] :
+//             ['sh', '-c', "docker exec ${dockerName} mysqladmin ping -hlocalhost -uroot -pTest123# --silent"]
+//         return exec { commandLine cmd }.exitValue
+//     } catch (all) {
+//         return 1
+//     }
+// }
 
-task startTestDockerContainer(type: Exec) {
-    if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-        def standardOutput = new ByteArrayOutputStream()
-        commandLine 'sh', '-c', 'docker run --rm -d --name ballerina-mysql -p 3305:3306 -t ballerina-mysql'
-        def healthCheck = 1
-        def counter = 0
-        doLast {
-            checkExecResult(executionResult, 'Error', standardOutput)
-            while (healthCheck != 0 && counter < 12) {
-                sleep(5 * 1000)
-                healthCheck = checkTestDockerContainerStatus('ballerina-mysql')
-                counter = counter + 1
-            }
-            if (healthCheck != 0) {
-                throw new GradleException("Docker container 'ballerina-mysql' health test exceeded timeout!")
-            }
-        }
-    }
-}
+// task startTestDockerContainer(type: Exec) {
+//     def standardOutput = new ByteArrayOutputStream()
+//     commandLine Os.isFamily(Os.FAMILY_WINDOWS) ?
+//         ['cmd', '/c', 'docker run --rm -d --name ballerina-mysql -p 3305:3306 -t ballerina-mysql'] :
+//         ['sh', '-c', 'docker run --rm -d --name ballerina-mysql -p 3305:3306 -t ballerina-mysql']
+//     def healthCheck = 1
+//     def counter = 0
+//     doLast {
+//         checkExecResult(executionResult, 'Error', standardOutput)
+//         while ((healthCheck ?: 1) != 0 && counter < 12) {
+//             sleep(5 * 1000)
+//             healthCheck = checkTestDockerContainerStatus('ballerina-mysql')
+//             counter = counter + 1
+//         }
+//         if ((healthCheck ?: 1) != 0) {
+//             throw new GradleException("Docker container 'ballerina-mysql' health test exceeded timeout!")
+//         }
+//     }
+// }
 
-task startTestLimitedDockerContainer(type: Exec) {
-    if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-        def standardOutput = new ByteArrayOutputStream()
-        commandLine 'sh', '-c', 'docker run --rm -d --name ballerina-mysql-limited -p 3303:3306 -t ballerina-mysql'
-        def healthCheck = 1
-        def counter = 0
-        doLast {
-            checkExecResult(executionResult, 'Error', standardOutput)
-            while (healthCheck != 0 && counter < 12) {
-                sleep(5 * 1000)
-                healthCheck = checkTestDockerContainerStatus('ballerina-mysql-limited')
-                counter = counter + 1
-            }
-            if (healthCheck != 0) {
-                throw new GradleException("Docker container 'ballerina-mysql-limited' health test exceeded timeout!")
-            }
-        }
-    }
-}
+// task startTestLimitedDockerContainer(type: Exec) {
+//     def standardOutput = new ByteArrayOutputStream()
+//     commandLine Os.isFamily(Os.FAMILY_WINDOWS) ?
+//         ['cmd', '/c', 'docker run --rm -d --name ballerina-mysql-limited -p 3303:3306 -t ballerina-mysql'] :
+//         ['sh', '-c', 'docker run --rm -d --name ballerina-mysql-limited -p 3303:3306 -t ballerina-mysql']
+//     def healthCheck = 1
+//     def counter = 0
+//     doLast {
+//         checkExecResult(executionResult, 'Error', standardOutput)
+//         while (healthCheck != 0 && counter < 12) {
+//             sleep(5 * 1000)
+//             healthCheck = checkTestDockerContainerStatus('ballerina-mysql-limited')
+//             counter = counter + 1
+//         }
+//         if (healthCheck != 0) {
+//             throw new GradleException("Docker container 'ballerina-mysql-limited' health test exceeded timeout!")
+//         }
+//     }
+// }
 
-task startTestDockerTrxContainer(type: Exec) {
-    if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-        def standardOutput = new ByteArrayOutputStream()
-        commandLine 'sh', '-c', 'docker run --rm -d --name ballerina-mysql-trx -p 3304:3306 -t ballerina-mysql'
-        def healthCheck = 1
-        def counter = 0
-        doLast {
-            checkExecResult(executionResult, 'Error', standardOutput)
-            while (healthCheck != 0 && counter < 12) {
-                sleep(5 * 1000)
-                healthCheck = checkTestDockerContainerStatus('ballerina-mysql-trx')
-                counter = counter + 1
-            }
-            if (healthCheck != 0) {
-                throw new GradleException("Docker container 'ballerina-mysql-trx' health test exceeded timeout!")
-            }
-        }
-    }
-}
+// task startTestDockerTrxContainer(type: Exec) {
+//     def standardOutput = new ByteArrayOutputStream()
+//     commandLine Os.isFamily(Os.FAMILY_WINDOWS) ?
+//         ['cmd', '/c', 'docker run --rm -d --name ballerina-mysql-trx -p 3304:3306 -t ballerina-mysql'] :
+//         ['sh', '-c', 'docker run --rm -d --name ballerina-mysql-trx -p 3304:3306 -t ballerina-mysql']
+//     def healthCheck = 1
+//     def counter = 0
+//     doLast {
+//         checkExecResult(executionResult, 'Error', standardOutput)
+//         while (healthCheck != 0 && counter < 12) {
+//             sleep(5 * 1000)
+//             healthCheck = checkTestDockerContainerStatus('ballerina-mysql-trx')
+//             counter = counter + 1
+//         }
+//         if (healthCheck != 0) {
+//             throw new GradleException("Docker container 'ballerina-mysql-trx' health test exceeded timeout!")
+//         }
+//     }
+// }
 
-task startTestSslDockerContainer(type: Exec) {
-    if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-        def standardOutput = new ByteArrayOutputStream()
-        commandLine 'sh', '-c', 'docker run --rm -d --name ballerina-mysql-ssl ' +
-                "-v $project.projectDir/tests/resources/mysql-ssl.cnf:/etc/mysql/conf.d/mysql-ssl.cnf " +
-                '-p 3307:3306 ' +
-                '-t ballerina-mysql'
-        def healthCheck = 1
-        def counter = 0
-        doLast {
-            checkExecResult(executionResult, 'Error', standardOutput)
-            while (healthCheck != 0 && counter < 12) {
-                sleep(5 * 1000)
-                healthCheck = checkTestDockerContainerStatus('ballerina-mysql-ssl')
-                counter = counter + 1
-            }
-            if (healthCheck != 0) {
-                throw new GradleException("Docker container 'ballerina-mysql-ssl' health test exceeded timeout!")
-            }
-        }
-    }
-}
+// task startTestSslDockerContainer(type: Exec) {
+//     def standardOutput = new ByteArrayOutputStream()
+//     commandLine Os.isFamily(Os.FAMILY_WINDOWS) ?
+//         ['cmd', '/c', "docker run --rm -d --name ballerina-mysql-ssl " +
+//             "-v %cd%\\tests\\resources\\mysql-ssl.cnf:/etc/mysql/conf.d/mysql-ssl.cnf " +
+//             "-p 3307:3306 -t ballerina-mysql"] :
+//         ['sh', '-c', "docker run --rm -d --name ballerina-mysql-ssl " +
+//             "-v $project.projectDir/tests/resources/mysql-ssl.cnf:/etc/mysql/conf.d/mysql-ssl.cnf " +
+//             "-p 3307:3306 -t ballerina-mysql"]
+//     def healthCheck = 1
+//     def counter = 0
+//     doLast {
+//         checkExecResult(executionResult, 'Error', standardOutput)
+//         while (healthCheck != 0 && counter < 12) {
+//             sleep(5 * 1000)
+//             healthCheck = checkTestDockerContainerStatus('ballerina-mysql-ssl')
+//             counter = counter + 1
+//         }
+//         if (healthCheck != 0) {
+//             throw new GradleException("Docker container 'ballerina-mysql-ssl' health test exceeded timeout!")
+//         }
+//     }
+// }
 
-task stopTestDockerContainer() {
-    doLast {
-        if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-            try {
-                def stdOut = new ByteArrayOutputStream()
-                exec {
-                    commandLine 'sh', '-c', 'docker stop ballerina-mysql'
-                    standardOutput = stdOut
-                }
-            } catch (all) {
-                println('Gradle process can safely ignore stopTestDockerContainer task')
-            }
-        }
-    }
-}
+// task stopTestDockerContainer() {
+//     doLast {
+//         try {
+//             def stdOut = new ByteArrayOutputStream()
+//             exec {
+//                 commandLine = Os.isFamily(Os.FAMILY_WINDOWS) ?
+//                     ['cmd', '/c', 'docker stop ballerina-mysql'] :
+//                     ['sh', '-c', 'docker stop ballerina-mysql']
+//                 standardOutput = stdOut
+//             }
+//         } catch (all) {
+//             println('Gradle process can safely ignore stopTestDockerContainer task')
+//         }
+//     }
+// }
 
-task stopTestLimitedDockerContainer() {
-    doLast {
-        if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-            try {
-                def stdOut = new ByteArrayOutputStream()
-                exec {
-                    commandLine 'sh', '-c', 'docker stop ballerina-mysql-limited'
-                    standardOutput = stdOut
-                }
-            } catch (all) {
-                println('Gradle process can safely ignore stopTestDockerContainer task')
-            }
-        }
-    }
-}
+// task stopTestLimitedDockerContainer() {
+//     doLast {
+//         try {
+//             def stdOut = new ByteArrayOutputStream()
+//             exec {
+//                 commandLine = Os.isFamily(Os.FAMILY_WINDOWS) ?
+//                     ['cmd', '/c', 'docker stop ballerina-mysql-limited'] :
+//                     ['sh', '-c', 'docker stop ballerina-mysql-limited']
+//                 standardOutput = stdOut
+//             }
+//         } catch (all) {
+//             println('Gradle process can safely ignore stopTestLimitedDockerContainer task')
+//         }
+//     }
+// }
 
-task stopTestDockerTrxContainer() {
-    doLast {
-        if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-            try {
-                def stdOut = new ByteArrayOutputStream()
-                exec {
-                    commandLine 'sh', '-c', 'docker stop ballerina-mysql-trx'
-                    standardOutput = stdOut
-                }
-            } catch (all) {
-                println('Gradle process can safely ignore stopTestDockerContainer task')
-            }
-        }
-    }
-}
+// task stopTestDockerTrxContainer() {
+//     doLast {
+//         try {
+//             def stdOut = new ByteArrayOutputStream()
+//             exec {
+//                 commandLine =  Os.isFamily(Os.FAMILY_WINDOWS) ?
+//                     ['cmd', '/c', 'docker stop ballerina-mysql-trx'] :
+//                     ['sh', '-c', 'docker stop ballerina-mysql-trx']
+//                 standardOutput = stdOut
+//             }
+//         } catch (all) {
+//             println('Gradle process can safely ignore stopTestDockerTrxContainer task')
+//         }
+//     }
+// }
 
-task stopTestSslDockerContainer() {
-    doLast {
-        if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-            try {
-                def stdOut = new ByteArrayOutputStream()
-                exec {
-                    commandLine 'sh', '-c', 'docker stop ballerina-mysql-ssl'
-                    standardOutput = stdOut
-                }
-            } catch (all) {
-                println('Gradle process can safely ignore stopTestSslDockerContainer task')
-            }
-        }
-    }
-}
+// task stopTestSslDockerContainer() {
+//     doLast {
+//         try {
+//             def stdOut = new ByteArrayOutputStream()
+//             exec {
+//                 commandLine = Os.isFamily(Os.FAMILY_WINDOWS) ?
+//                     ['cmd', '/c', 'docker stop ballerina-mysql-ssl'] :
+//                     ['sh', '-c', 'docker stop ballerina-mysql-ssl']
+//                 standardOutput = stdOut
+//             }
+//         } catch (all) {
+//             println('Gradle process can safely ignore stopTestSslDockerContainer task')
+//         }
+//     }
+// }
 
 updateTomlFiles.dependsOn copyStdlibs
-startTestDockerContainer.dependsOn createTestDockerImage
-startTestSslDockerContainer.dependsOn createTestDockerImage
+// startTestDockerContainer.dependsOn createTestDockerImage
+// startTestSslDockerContainer.dependsOn createTestDockerImage
 
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-native:build"
 test.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
 test.dependsOn ":${packageName}-compiler-plugin:build"
-build.finalizedBy stopTestDockerContainer
-build.finalizedBy stopTestLimitedDockerContainer
-build.finalizedBy stopTestDockerTrxContainer
-build.finalizedBy stopTestSslDockerContainer
-test.dependsOn startTestDockerContainer
-test.dependsOn startTestLimitedDockerContainer
-test.dependsOn startTestDockerTrxContainer
-test.dependsOn startTestSslDockerContainer
+// build.finalizedBy stopTestDockerContainer
+// build.finalizedBy stopTestLimitedDockerContainer
+// build.finalizedBy stopTestDockerTrxContainer
+// build.finalizedBy stopTestSslDockerContainer
+// test.dependsOn startTestDockerContainer
+// test.dependsOn startTestLimitedDockerContainer
+// test.dependsOn startTestDockerTrxContainer
+// test.dependsOn startTestSslDockerContainer

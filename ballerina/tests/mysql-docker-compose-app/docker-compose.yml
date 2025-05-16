@@ -1,0 +1,81 @@
+services:
+  mysql:
+    container_name: ballerina-mysql
+    image: mysql:8.0.40
+    environment:
+      MYSQL_ROOT_PASSWORD: Test123#
+    volumes:
+      - ./sql-scripts:/docker-entrypoint-initdb.d
+      - ./keystore/server:/etc/ssl
+      - ./my.cnf:/etc/my.cnf
+    ports:
+      - "3305:3306"
+    networks:
+      - mysql-network
+    healthcheck:
+        test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+  # mysql-limited:
+  #   container_name: ballerina-mysql-limited
+  #   image: mysql:8.0.40
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: Test123#
+  #   volumes:
+  #     - ./sql-scripts:/docker-entrypoint-initdb.d
+  #     - ./keystore/server:/etc/ssl
+  #     - ./my.cnf:/etc/my.cnf
+  #   ports:
+  #     - "3303:3306"
+  #   networks:
+  #     - mysql-network
+  #   healthcheck:
+  #       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #       interval: 10s
+  #       timeout: 5s
+  #       retries: 5
+
+  # mysql-ssl:
+  #   container_name: ballerina-mysql-ssl
+  #   image: mysql:8.0.40
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: Test123#
+  #   volumes:
+  #     - ./sql-scripts:/docker-entrypoint-initdb.d
+  #     - ./keystore/server:/etc/ssl
+  #     - ./mysql-ssl.cnf:/etc/my.cnf
+  #   ports:
+  #     - "3307:3306"
+  #   networks:
+  #     - mysql-network
+  #   healthcheck:
+  #       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #       interval: 10s
+  #       timeout: 5s
+  #       retries: 5
+
+  # mysql-trx:
+  #   container_name: ballerina-mysql-trx
+  #   image: mysql:8.0.40
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: Test123#
+  #   volumes:
+  #     - ./sql-scripts:/docker-entrypoint-initdb.d
+  #     - ./keystore/server:/etc/ssl
+  #     - ./my.cnf:/etc/my.cnf
+  #   ports:
+  #     - "3304:3306"
+  #   networks:
+  #     - mysql-network
+  #   healthcheck:
+  #       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #       interval: 10s
+  #       timeout: 5s
+  #       retries: 5
+
+
+networks:
+  mysql-network:
+    driver: bridge
